@@ -9,10 +9,10 @@ function parseCSV(text){const rows=[];let row=[],cur='',q=false;for(let i=0;i<te
 function pick(obj,names){const keys=Object.keys(obj);for(const n of names){let k=keys.find(k=>low(k)===low(n));if(k)return clean(obj[k]);k=keys.find(k=>low(k).includes(low(n)));if(k)return clean(obj[k]);}return'';}
 function normPhone(p){return clean(p).replace(/[^0-9]/g,'');}
 function makeId(p){return [p.type,p.name,p.team,p.phone].map(low).join('|').replace(/[^a-z0-9|]/g,'');}
-function requiresWaiver(p){return !!(settings.ruleWaiver&&((p.type==='Public'&&settings.ruleWaiverPublic)||(p.type==='Swarm'&&settings.ruleWaiverSwarm)||(!['Public','Swarm'].includes(p.type)&&settings.ruleWaiverPublic)));}
+function requiresWaiver(p){return !!(appSettings.ruleWaiver&&((p.type==='Public'&&appSettings.ruleWaiverPublic)||(p.type==='Swarm'&&appSettings.ruleWaiverSwarm)||(!['Public','Swarm'].includes(p.type)&&appSettings.ruleWaiverPublic)));}
 function needsWaiver(p){return requiresWaiver(p)&&!p.waiver;}
-function selectedDay(){return $('dayFilter')?.value||settings.days[0]?.date||today();}
-function selectedSession(){return $('sessionFilter')?.value||settings.days.find(d=>d.date===selectedDay())?.sessions[0]||'Session 1';}
+function selectedDay(){return $('dayFilter')?.value||appSettings.days[0]?.date||today();}
+function selectedSession(){return $('sessionFilter')?.value||appSettings.days.find(d=>d.date===selectedDay())?.sessions[0]||'Session 1';}
 function slotKey(day=selectedDay(),session=selectedSession()){return `${day}|${session}`;}
 function slotRecord(p,key=slotKey()){p.attendance=p.attendance||{};return p.attendance[key]||null;}
 function isChecked(p,key=slotKey()){return !!slotRecord(p,key)?.checked;}

@@ -1,10 +1,5 @@
-# MSS Attendance Manager v1.3.2
+# MSS Attendance Manager v1.3.3
 
-Fixes:
-- Reliable MSS and second-source CSV uploads with confirmation/error messages.
-- Second source is fully customizable (Stan Store, Square, TeamSnap, LeagueApps, etc.).
-- Check-in Source filter is generated from the actual imported source names.
-- Removed hard-coded LeagueApps labels from the upload screen.
-- Added cache-busting so GitHub Pages loads the matching JavaScript/CSS files.
+Import initialization fix. The application configuration object was renamed to prevent a browser initialization conflict that caused CSV imports to fail with “Cannot access settings before initialization.”
 
-Upload the complete folder structure. `index.html` remains in the repository root; CSS stays inside `css/`; JavaScript stays inside `js/`; samples stay inside `samples/`.
+Upload the complete project structure to GitHub Pages.

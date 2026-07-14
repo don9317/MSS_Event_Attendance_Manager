@@ -10,7 +10,7 @@ function flexiblePick(row, exactNames, containsWords=[]){
 }
 function normalizeRow(row,kind){
   const isMss=kind==='mss';
-  const source=isMss?'MSS':(clean($('secondarySourceName')?.value)||clean(settings.secondarySourceName)||'Other Source');
+  const source=isMss?'MSS':(clean($('secondarySourceName')?.value)||clean(appSettings.secondarySourceName)||'Other Source');
   const player=flexiblePick(row,
     isMss?['playerOrTeamName','player/team name','participant','player name','attendee','child name','camper name','athlete name']:
           ['player name','participant name','camper name','athlete name','child name','student name','registrant name','customer name','full name','name','participant','child','athlete','camper'],
@@ -25,8 +25,8 @@ function normalizeRow(row,kind){
   const phone=flexiblePick(row,['userPhoneNumber','phone','phone number','parent phone','guardian phone','mobile','customer phone'],[['phone'],['mobile']]);
   const className=flexiblePick(row,['activity','class','event','program','product','product name','offer','item','name']);
   let session=flexiblePick(row,['session','session name','time','time slot','group','ticket type','option']);
-  if(!session && /beginner/i.test(className)) session=settings.days[0]?.sessions[0]||'Beginner';
-  if(!session && /intermediate/i.test(className)) session=settings.days[0]?.sessions[1]||'Intermediate';
+  if(!session && /beginner/i.test(className)) session=appSettings.days[0]?.sessions[0]||'Beginner';
+  if(!session && /intermediate/i.test(className)) session=appSettings.days[0]?.sessions[1]||'Intermediate';
   if(!session) session=className||'All Sessions';
   const waiverText=flexiblePick(row,['waiver','waiver status','signed waiver']);
   const paidText=flexiblePick(row,['paid','payment','paid status','payment status','status','price']);
@@ -48,7 +48,7 @@ function loadCsv(kind){
   const inp=kind==='mss'?$('mssFile'):$('secondaryFile');
   if(!inp?.files?.[0]){alert('Choose a CSV first.');return;}
   if(kind==='secondary'){
-    settings.secondarySourceName=clean($('secondarySourceName')?.value)||'Other Source';
+    appSettings.secondarySourceName=clean($('secondarySourceName')?.value)||'Other Source';
     save(); updateSecondarySourceLabels();
   }
   const r=new FileReader();
@@ -63,7 +63,7 @@ function loadCsv(kind){
         alert(`No participant names could be identified. CSV columns found: ${headers}`);
         return;
       }
-      alert(`${count} participant${count===1?'':'s'} loaded from ${kind==='mss'?'MSS':settings.secondarySourceName}.`);
+      alert(`${count} participant${count===1?'':'s'} loaded from ${kind==='mss'?'MSS':appSettings.secondarySourceName}.`);
     }catch(err){alert('Could not import this CSV: '+(err?.message||err));}
   };
   r.onerror=()=>alert('The selected CSV could not be read.');
