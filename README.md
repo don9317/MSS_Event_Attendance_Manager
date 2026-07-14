@@ -1,4 +1,4 @@
-# MSS Attendance Manager v1.3.5
+# MSS Attendance Manager v1.3.6
 
 Verified import initialization fix.
 
@@ -8,3 +8,8 @@ Upload the complete contents to the repository while preserving the `css`, `js`,
 
 
 Fix: cross-source duplicate campers are consolidated using player name plus matching email or phone. MSS is retained as the primary source when the same camper appears in both files.
+
+
+## v1.3.6
+- Dashboard tallies now respond to the active source, session, status, and search filters.
+- Example: All Sources 111, MSS 28, Other Source 83.
