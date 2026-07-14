@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MSS Attendance Manager v1.3.2</title>
+<link rel="stylesheet" href="css/styles.css?v=132" />
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="brand">MSS Attendance</div>
+    <div class="sub">Manager v1.3.2</div>
+    <div class="nav">
+      <button class="active" data-tab="checkin">Today Check-In</button>
+      <button data-tab="admin">Admin Upload</button>
+      <button data-tab="setup">Session Builder</button>
+      <button data-tab="waivers">Waivers</button>
+      <button data-tab="homework">Homework</button>
+      <button data-tab="communications">Communications</button>
+      <button data-tab="tracker">Attendance Tracker</button>
+      <button data-tab="reports">Reports</button>
+    </div>
+  </aside>
+  <main class="content">
+    <div class="top">
+      <div class="title"><h1 id="activityTitle">Wednesday Skills Check-In</h1><p id="activitySub">Multi-day event check-in, manual lookup, waivers, homework, and attendance reports.</p></div>
+      <div class="pill" id="datePill"></div>
+    </div>
+
+    <section id="checkin" class="tab">
+      <div class="grid">
+        <div class="tile"><div class="label">Loaded</div><div class="num" id="kRegistered">0</div></div>
+        <div class="tile"><div class="label">Checked In</div><div class="num" id="kChecked">0</div></div>
+        <div class="tile"><div class="label">Needs Waiver</div><div class="num" id="kWaiver">0</div></div>
+        <div class="tile"><div class="label">Homework Done</div><div class="num" id="kHomework">0</div></div>
+      </div>
+      <div class="card">
+        <div class="row between"><div class="row"><select id="dayFilter" onchange="onDayChange()"></select><select id="sessionFilter" onchange="renderAll()"></select><select id="typeFilter" onchange="renderAll()"><option value="all">All Sources</option></select><select id="statusFilter" onchange="renderAll()"><option value="all">All Statuses</option><option value="checked">Checked In</option><option value="notchecked">Not Checked In</option><option value="waiver">Needs Waiver</option></select></div><div class="row"><button class="btn secondary" onclick="clearFilters()">Clear Filters</button></div></div>
+        <div class="scanPanel" id="scanPanel"><div class="field"><label>Optional QR / Membership Scan</label><div class="row"><input id="scanInput" placeholder="Scan, paste, or enter QR/member ID"/><button class="btn green" onclick="scanCode()">Scan / Find</button><button class="btn secondary" onclick="openScanner()">📷 Open Camera Scanner</button></div><div class="small">Use a phone/tablet camera, laptop webcam, USB scanner, or manual entry. Search by name remains available below.</div></div></div>
+        <div class="field"><label>Manual Lookup</label><input id="search" placeholder="Search player, parent, phone, team..." oninput="renderAll()"></div>
+        <div class="small" id="filterHelp">Tip: Choose the registration source first to narrow the list. Session filtering applies when the imported file identifies a specific session.</div><div id="filterMsg" class="notice hidden"></div><div id="scanMsg" class="notice hidden"></div>
+      </div>
+      <div class="list" id="peopleList"></div>
+    </section>
+
+    <section id="admin" class="tab hidden">
+      <div class="card"><h2>Upload Rosters / Registrations</h2><p class="small">The first file comes from MSS. The second file may come from any registration or roster system; enter the source name before uploading.</p>
+        <div class="two"><div class="field"><label>MSS Public Registration CSV</label><input type="file" id="mssFile" accept=".csv"><button class="btn" onclick="loadCsv('mss')">Upload MSS CSV</button></div><div class="field"><label>Other File Source Name</label><input id="secondarySourceName" value="Other Source" placeholder="Stan Store, Square, TeamSnap, LeagueApps, etc." oninput="updateSecondarySourceLabels()"><div class="small" id="secondarySourceHelp">Enter the name of the system that produced this CSV.</div><label id="secondarySourceLabel">Other Registration / Roster CSV</label><input type="file" id="secondaryFile" accept=".csv"><button class="btn" id="secondaryUploadBtn" onclick="loadCsv('secondary')">Upload Other Source CSV</button></div></div>
+        <div class="row"><button class="btn secondary" onclick="loadSample()">Load Sample Data</button><button class="btn red" onclick="clearAll()">Clear All</button></div>
+      </div>
+      <div class="card"><h2>Imported Participants</h2><div id="importTable"></div></div>
+    </section>
+
+    <section id="setup" class="tab hidden">
+      <div class="card"><h2>Session Builder</h2><p class="small">Configure how this attendance activity works without changing code.</p>
+        <div class="two"><div class="field"><label>Activity Name</label><input id="setActivityName"></div><div class="field"><label>Activity Type</label><select id="setActivityType"><option>Skills Clinic</option><option>Camp</option><option>Practice</option><option>Tournament</option><option>League</option><option>Training Session</option><option>Birthday Party</option><option>Custom</option></select></div></div>
+        <div class="field"><label>Number of Event Days</label><select id="setDayCount" onchange="renderDayBuilder()"><option value="1">1 day</option><option value="2">2 days</option><option value="3">3 days</option><option value="4">4 days</option><option value="5">5 days</option></select></div>
+        <div id="dayBuilder" class="dayBuilder"></div>
+        <p class="small">Each day can have one or two sessions. Leave Session 2 blank when the day has only one session.</p>
+        <h3>Roster Sources</h3><label><input type="checkbox" id="srcPublic" checked> MSS registrations</label><br><label><input type="checkbox" id="srcSwarm" checked> <span id="srcSwarmLabel">Other registration / roster source</span></label>
+        <h3>Check-In Methods</h3><label><input type="checkbox" id="methodSearch" checked disabled> Search by name/phone/team - always available</label><br><label><input type="checkbox" id="methodQR"> Optional QR / registration code scanning</label><br><label><input type="checkbox" id="methodMembership" checked> Optional membership card/member ID scanning</label><br><label><input type="checkbox" id="methodManual" checked> Manual/walk-in entry fallback</label>
+        <h3>Rules</h3><label><input type="checkbox" id="ruleWaiver"> Enable waiver requirement for this activity</label><br><div style="margin:8px 0 8px 24px"><label><input type="checkbox" id="ruleWaiverPublic" checked> Require waivers for MSS participants</label><br><label><input type="checkbox" id="ruleWaiverSwarm"> Require waivers for participants from the other source</label><br><span class="small">Leave the second-source waiver option unchecked when waivers were already completed in that registration system.</span></div><label><input type="checkbox" id="ruleHomework" checked> Track homework</label><br><label><input type="checkbox" id="ruleArrival" checked> Track arrival time</label><br><label><input type="checkbox" id="ruleSwarmEligible" checked> Treat all participants from the second source as eligible unless marked inactive</label>
+        <div class="row"><button class="btn" onclick="saveSettings()">Save Setup</button><button class="btn secondary" onclick="resetSettings()">Reset Defaults</button></div>
+      </div>
+    </section>
+
+    <section id="waivers" class="tab hidden"><div class="card"><h2>Waiver Queue</h2><div id="waiverTable"></div></div></section>
+    <section id="homework" class="tab hidden"><div class="card"><h2>Homework Tracker</h2><div id="homeworkTable"></div></div></section>
+    <section id="communications" class="tab hidden"><div class="card"><h2>Communications</h2><p class="small">Create email/text lists by audience. This version opens your device email/text app or copies lists.</p><div class="two"><div><div class="field"><label>Audience</label><select id="commAudience" onchange="renderComm()"><option value="all">Everyone loaded</option><option value="visible">Current filters only</option><option value="checked">Checked in today</option><option value="notchecked">Not checked in yet</option><option value="public">Public participants</option><option value="swarm">Swarm players</option><option value="waiver">Missing waiver</option><option value="homeworkPending">Homework pending</option></select></div><div class="field"><label>Template</label><select id="commTemplate" onchange="applyTemplate()"><option value="custom">Custom</option><option value="cancel">Class cancelled</option><option value="homework">Homework</option><option value="reminder">Reminder</option><option value="waiver">Waiver reminder</option></select></div><div class="field"><label>Subject</label><input id="commSubject" value="MSS Attendance Update"></div><div class="field"><label>Message</label><textarea id="commBody" rows="7">Hello,\n\nThis is a quick update from MSS Attendance.\n\nThank you.</textarea></div><div class="row"><button class="btn" onclick="openEmail()">Open Email</button><button class="btn secondary" onclick="copyEmails()">Copy Emails</button><button class="btn secondary" onclick="copyPhones()">Copy Text Numbers</button><button class="btn secondary" onclick="exportCommList()">Export Contacts</button></div></div><div><h3>Recipients</h3><div class="grid twoTiles"><div class="tile"><div class="label">Recipients</div><div class="num" id="commCount">0</div></div><div class="tile"><div class="label">With Email</div><div class="num" id="commEmailCount">0</div></div></div><div id="commList"></div></div></div></div></section>
+    <section id="tracker" class="tab hidden"><div class="grid"><div class="tile"><div class="label">Total Records</div><div class="num" id="trackRecords">0</div></div><div class="tile"><div class="label">Swarm Teams</div><div class="num" id="trackTeams">0</div></div><div class="tile"><div class="label">Swarm Today</div><div class="num" id="trackSwarmToday">0</div></div><div class="tile"><div class="label">Public Today</div><div class="num" id="trackPublicToday">0</div></div></div><div class="card"><h2>Individual Attendance</h2><div class="row"><select id="trackerType" onchange="renderTracker()"><option value="all">All Participants</option><option value="Swarm">Swarm only</option><option value="Public">Public only</option></select><select id="trackerTeam" onchange="renderTracker()"><option value="all">All Teams</option></select><input id="trackerSearch" placeholder="Search player/team..." oninput="renderTracker()"></div><div id="individualTracker"></div></div><div class="card"><h2>Swarm Team Attendance</h2><p class="small">Coach-facing summary only includes Swarm data.</p><div id="teamTracker"></div><div class="row"><button class="btn" onclick="exportTeamReport()">Export Team Coach Report</button><button class="btn secondary" onclick="copyTeamReport()">Copy Team Summary</button></div></div></section>
+    <section id="reports" class="tab hidden"><div class="card"><h2>Exports / Import History</h2><div class="row"><button class="btn" onclick="exportCsv('attendance')">Export Attendance</button><button class="btn" onclick="exportCsv('practiceBridge')">Export Swarm Practice Bridge</button><button class="btn secondary" onclick="exportCsv('waivers')">Export Waivers</button><button class="btn secondary" onclick="exportHistory()">Export History</button></div><div class="field"><label>Import Prior Attendance History CSV</label><input type="file" id="historyFile" accept=".csv"><button class="btn secondary" onclick="importHistory()">Import History</button></div></div><div class="card"><h2>Summary</h2><div id="reportSummary"></div></div></section>
+    <div class="footer">Powered by My Sport Space</div>
+  </main>
+</div>
+
+<div class="modal" id="scannerModal"><div class="modalbox scannerBox"><h2>Camera QR Scanner</h2><div id="scannerStatus" class="readyBox yellow">Starting camera...</div><div class="scannerStage"><video id="scannerVideo" playsinline muted></video><div class="scannerFrame"></div></div><div class="small">Point the camera at an MSS registration QR code or membership card. If the camera is not supported, use the scan input box or manual search.</div><div class="row between"><button class="btn secondary" onclick="closeScanner()">Close Scanner</button><button class="btn" onclick="restartScanner()">Restart</button></div></div></div>
+<div class="scanToast hidden" id="scanToast"><div class="scanToastTitle" id="scanToastTitle">WELCOME</div><div id="scanToastBody"></div></div>
+<div class="modal" id="waiverModal">
+  <div class="modalbox waiverBox">
+    <div class="waiverBody">
+      <h2 id="waiverTitle">Electronic Waiver</h2>
+      <div id="waiverStatus" class="readyBox yellow">Action Required: waiver must be completed before check-in.</div>
+      <p id="waiverFor"></p>
+      <div class="field"><label>Parent/Guardian Name</label><input id="guardianName" placeholder="Type parent/guardian name" oninput="updateWaiverReady()"></div>
+      <div class="field"><label>Agreement</label><div class="waiverText">I am the parent or legal guardian of the participant listed above. I acknowledge the risks of athletic participation, including risk of injury, and authorize participation in this activity. I agree to the applicable facility, camp, clinic, team, or event waiver and release terms on file for this activity. By signing below, I certify that I am authorized to sign for this participant and that this electronic signature may be used as the record of waiver completion for check-in and attendance purposes.</div><label class="agreementBox"><input type="checkbox" id="waiverAgree" onchange="updateWaiverReady()"><span><b>I have read and agree to the above waiver</b> and certify that I am the parent or legal guardian of this participant.</span></label></div>
+      <div class="field"><label>Signature</label><canvas id="signaturePad" class="sig disabled"></canvas><div class="sigTools"><span class="small" id="sigHint">Check the agreement box, then sign here with finger or mouse.</span><button class="btn secondary" onclick="clearSignature()" type="button">Clear Signature</button></div></div>
+    </div>
+    <div class="waiverFooter"><button class="btn secondary" onclick="closeWaiver()">Cancel</button><button class="btn green" id="waiverCompleteBtn" onclick="completeWaiver()" disabled>Complete Waiver & Check In</button></div>
+  </div>
+</div>
+<script src="js/state.js?v=132"></script><script src="js/utils.js?v=132"></script><script src="js/importer.js?v=132"></script><script src="js/ui.js?v=132"></script><script src="js/attendance.js?v=132"></script><script src="js/waiver.js?v=132"></script><script src="js/scanner.js?v=132"></script><script src="js/tracker.js?v=132"></script><script src="js/communications.js?v=132"></script><script src="js/sample-data.js?v=132"></script><script src="js/main.js?v=132"></script>
+</body>
+</html>

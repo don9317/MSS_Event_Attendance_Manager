@@ -1,0 +1,5 @@
+function loadSample(){mergePeople([
+ {type:'Public',name:'Jack Myer',parent:'Sarah Myer',email:'sarah@example.com',phone:'4055551001',team:'',session:'Beginner 5:30-6:30',source:'MSS',checked:false,arrival:'',attendance:{},homework:false,waiver:false,paid:true,qr:'MSS-JACK-001',memberId:''},
+ {type:'Public',name:'Cameran Cochran',parent:'Amy Cochran',email:'amy@example.com',phone:'4055551002',team:'',session:'Intermediate 6:30-7:30',source:'MSS',checked:false,arrival:'',attendance:{},homework:false,waiver:false,paid:true,qr:'MSS-CAM-002',memberId:''},
+ {type:'Swarm',name:'Emma Smith',parent:'Jane Smith',email:'jane@example.com',phone:'4055552001',team:'2034 Elite',session:'Eligible Any Session',source:'Other Source',checked:false,arrival:'',attendance:{},homework:false,waiver:true,paid:true,qr:'',memberId:'SWARM-EMMA-2034'},
+ {type:'Swarm',name:'Ava Jones',parent:'Kelly Jones',email:'kelly@example.com',phone:'4055552002',team:'2035 Blue',session:'Eligible Any Session',source:'Other Source',checked:false,arrival:'',attendance:{},homework:false,waiver:true,paid:true,qr:'',memberId:'SWARM-AVA-2035'}].map(p=>({...p,id:makeId(p)})));}
