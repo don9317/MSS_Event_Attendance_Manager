@@ -70,11 +70,40 @@ function normalizeRow(row,kind){
   if(!p.memberId && !isMss) p.memberId='EXT-'+makeId(p).slice(0,18).toUpperCase();
   p.id=makeId(p); return p;
 }
+function sameParticipant(a,b){
+  if(low(a.name)!==low(b.name)) return false;
+  const ae=low(a.email),be=low(b.email),ap=normPhone(a.phone),bp=normPhone(b.phone);
+  if(ae&&be&&ae===be) return true;
+  if(ap.length>=7&&bp.length>=7&&ap===bp) return true;
+  const aparent=low(a.parent),bparent=low(b.parent);
+  return !ae&&!be&&!ap&&!bp&&aparent&&bparent&&aparent===bparent;
+}
+function mergeDuplicate(a,b){
+  const mssA=a.source==='MSS',mssB=b.source==='MSS';
+  const primary=mssB&&!mssA?b:a;
+  const secondary=primary===a?b:a;
+  const merged={...secondary,...primary};
+  ['name','parent','email','phone','team','session','qr','memberId','guardian','waiverDate','signature'].forEach(k=>{merged[k]=clean(primary[k])||clean(secondary[k]);});
+  merged.attendance={...(secondary.attendance||{}),...(primary.attendance||{})};
+  merged.homework=!!(a.homework||b.homework);
+  merged.waiver=!!(a.waiver||b.waiver);
+  merged.paid=!!(a.paid||b.paid);
+  merged.id=makeId(merged);
+  return merged;
+}
+function consolidatePeople(list){
+  const out=[];
+  list.filter(n=>n&&n.name).forEach(n=>{
+    const i=out.findIndex(x=>sameParticipant(x,n));
+    if(i<0) out.push({...n,attendance:n.attendance||{},id:n.id||makeId(n)});
+    else out[i]=mergeDuplicate(out[i],n);
+  });
+  return out.sort((a,b)=>a.name.localeCompare(b.name));
+}
 function mergePeople(newOnes){
   const valid=newOnes.filter(n=>n.name);
-  const map=new Map(people.map(p=>[p.id,p]));
-  valid.forEach(n=>{if(map.has(n.id)) Object.assign(map.get(n.id),n,map.get(n.id)); else map.set(n.id,n);});
-  people=[...map.values()].sort((a,b)=>a.name.localeCompare(b.name)); save(); renderAll();
+  people=consolidatePeople([...people,...valid]);
+  save(); renderAll();
   return valid.length;
 }
 function loadCsv(kind){
@@ -215,5 +244,5 @@ function loadSample(){mergePeople([
  {type:'Public',name:'Cameran Cochran',parent:'Amy Cochran',email:'amy@example.com',phone:'4055551002',team:'',session:'Intermediate 6:30-7:30',source:'MSS',checked:false,arrival:'',attendance:{},homework:false,waiver:false,paid:true,qr:'MSS-CAM-002',memberId:''},
  {type:'Swarm',name:'Emma Smith',parent:'Jane Smith',email:'jane@example.com',phone:'4055552001',team:'2034 Elite',session:'Eligible Any Session',source:'Other Source',checked:false,arrival:'',attendance:{},homework:false,waiver:true,paid:true,qr:'',memberId:'SWARM-EMMA-2034'},
  {type:'Swarm',name:'Ava Jones',parent:'Kelly Jones',email:'kelly@example.com',phone:'4055552002',team:'2035 Blue',session:'Eligible Any Session',source:'Other Source',checked:false,arrival:'',attendance:{},homework:false,waiver:true,paid:true,qr:'',memberId:'SWARM-AVA-2035'}].map(p=>({...p,id:makeId(p)})));}
-function boot(){setupTabs();applySettingsToUI();renderAll();}
+function boot(){people=consolidatePeople(people);save();setupTabs();applySettingsToUI();renderAll();}
 document.addEventListener('DOMContentLoaded',boot);
