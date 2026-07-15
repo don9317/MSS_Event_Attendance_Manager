@@ -1,15 +1,23 @@
-# MSS Attendance Manager v1.3.6
+# MSS Attendance Manager v2.0
 
-Verified import initialization fix.
+Unified attendance-record architecture. Live check-in, tallies, tracker, reports, archives, and history exports use one record per participant/date/session.
 
-This release uses one JavaScript bundle (`js/app.js`) so initialization order is deterministic and older mixed module files cannot cause `Cannot access appSettings before initialization` errors.
+# MSS Attendance Manager v1.4
 
-Upload the complete contents to the repository while preserving the `css`, `js`, and `samples` folders.
+Standalone GitHub Pages attendance and arrival manager.
 
+## New in v1.4
+- Imports grade, age, and date of birth when available.
+- Optional requirement that each participant have a grade or age.
+- Optional court/area assignment made by staff at check-in.
+- Court/area assignment is stored separately by day and session.
+- Live filtering and badges by court/area.
+- Event archive stored in the current browser.
+- Event JSON backup and restore for moving or safeguarding an event.
+- Duplicate-event setup for starting a similar event.
+- Clear Local Device Mode notice.
+- Communication sender/reply-to fields.
+- Post-event survey email template and survey-link setting.
 
-Fix: cross-source duplicate campers are consolidated using player name plus matching email or phone. MSS is retained as the primary source when the same camper appears in both files.
-
-
-## v1.3.6
-- Dashboard tallies now respond to the active source, session, status, and search filters.
-- Example: All Sources 111, MSS 28, Other Source 83.
+## Important
+Data is saved in browser local storage on the device and browser being used. Export an Event Backup at the end of each day or event.
