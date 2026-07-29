@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>MSS Attendance & Arrival Manager v5.0</title>
-<link rel="stylesheet" href="css/styles.css?v=500" />
+<title>MSS Attendance & Arrival Manager v5.1</title>
+<link rel="stylesheet" href="css/styles.css?v=510" />
 </head>
 <body>
 <div class="app">
   <aside class="side">
     <div class="brand">MSS Attendance & Arrival</div>
-    <div class="sub">Manager v5.0</div>
+    <div class="sub">Manager v5.1</div>
     <div class="nav">
       <button class="active" data-tab="checkin">Today Check-In</button>
       <button data-tab="admin">Admin Upload</button>
@@ -30,7 +30,9 @@
     </div>
 
     <section id="checkin" class="tab">
-      <div class="grid">
+      <div class="grid attendanceKpis">
+        <div class="tile"><div class="label">Swarm Players</div><div class="num" id="kSwarm">0</div></div>
+        <div class="tile"><div class="label">Public Registrations</div><div class="num" id="kPublic">0</div></div>
         <div class="tile"><div class="label">Session Roster</div><div class="num" id="kRegistered">0</div></div>
         <div class="tile"><div class="label">Checked In</div><div class="num" id="kChecked">0</div></div>
         <div class="tile"><div class="label">Needs Waiver</div><div class="num" id="kWaiver">0</div></div>
@@ -123,6 +125,6 @@
     <div class="waiverFooter"><button class="btn secondary" onclick="closeWaiver()">Cancel</button><button class="btn green" id="waiverCompleteBtn" onclick="completeWaiver()" disabled>Complete Waiver & Check In</button></div>
   </div>
 </div>
-<script src="js/app.js?v=500"></script>
+<script src="js/app.js?v=510"></script>
 </body>
 </html>

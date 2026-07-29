@@ -1,4 +1,4 @@
-# MSS Attendance & Arrival Manager v5.0
+# MSS Attendance & Arrival Manager v5.1
 
 This release consolidates the verified Attendance Manager feature line into one current version.
 
@@ -30,4 +30,11 @@ This release consolidates the verified Attendance Manager feature line into one 
 
 ## Important deployment note
 
-Replace the prior GitHub Pages files with the contents of this folder. Confirm that `index.html`, `css/styles.css`, and `js/app.js` all come from v5.0 so the page title and displayed version do not remain on an older cached build.
+Replace the prior GitHub Pages files with the contents of this folder. Confirm that `index.html`, `css/styles.css`, and `js/app.js` all come from v5.1 so the page title and displayed version do not remain on an older cached build.
+
+
+## v5.1 corrections
+- Re-importing a roster replaces the prior roster from that source instead of appending duplicates.
+- Duplicate matching now uses member/registration IDs first and falls back to name plus source/team/grade.
+- Restored separate Swarm Players and Public Registrations dashboard tiles.
+- Session Roster remains available as the selected day/session tally.

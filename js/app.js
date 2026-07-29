@@ -29,8 +29,8 @@ function matchesSearch(p,q){if(!q)return true;const words=low(q).split(/\s+/).fi
 function baseCohort(){const sess=selectedSession();const source=$('typeFilter')?.value||'all';const area=$('areaFilter')?.value||'all';return people.filter(p=>{if(source!=='all'&&p.source!==source)return false;if(p.type==='Public'&&!publicMatchesSession(p,sess))return false;if(area!=='all'&&currentArea(p)!==area)return false;return true;});}
 function visiblePeople(){const q=$('search')?.value||'';const stat=$('statusFilter')?.value||'all';return baseCohort().filter(p=>{const checked=isChecked(p);if(stat==='checked'&&!checked)return false;if(stat==='notchecked'&&checked)return false;if(stat==='waiver'&&!needsWaiver(p))return false;return matchesSearch(p,q);});}
 function formatDayLabel(d){const dt=new Date(d.date+'T12:00:00');const pretty=isNaN(dt)?d.date:dt.toLocaleDateString([], {weekday:'short',month:'short',day:'numeric'});return `${d.label||'Day'} — ${pretty}`;}
-const LS='mssAttendanceArrival_v50_';
-const OLD_KEYS=['mssAttendance_v20_','mssAttendance_v42_','mssAttendanceArrival_v42_','mssAttendance_v13_','mssAttendance_v124_'];
+const LS='mssAttendanceArrival_v51_';
+const OLD_KEYS=['mssAttendanceArrival_v50_','mssAttendance_v20_','mssAttendance_v42_','mssAttendanceArrival_v42_','mssAttendance_v13_','mssAttendance_v124_'];
 function loadFirst(suffix,fallback){for(const k of [LS,...OLD_KEYS]){const raw=localStorage.getItem(k+suffix);if(raw){try{return JSON.parse(raw)}catch(e){}}}return fallback;}
 let people=loadFirst('people',[]);
 let legacyHistory=loadFirst('history',[]);
@@ -96,12 +96,18 @@ function normalizeRow(row,kind){
   p.id=makeId(p); return p;
 }
 function sameParticipant(a,b){
+  const aid=clean(a.memberId||a.qr),bid=clean(b.memberId||b.qr);
+  if(aid&&bid&&low(aid)===low(bid)) return true;
   if(low(a.name)!==low(b.name)) return false;
   const ae=low(a.email),be=low(b.email),ap=normPhone(a.phone),bp=normPhone(b.phone);
   if(ae&&be&&ae===be) return true;
   if(ap.length>=7&&bp.length>=7&&ap===bp) return true;
+  if(clean(a.source)&&clean(b.source)&&low(a.source)===low(b.source)){
+    const at=low(a.team),bt=low(b.team),ag=low(a.grade||a.age),bg=low(b.grade||b.age);
+    if((!at||!bt||at===bt)&&(!ag||!bg||ag===bg)) return true;
+  }
   const aparent=low(a.parent),bparent=low(b.parent);
-  return !ae&&!be&&!ap&&!bp&&aparent&&bparent&&aparent===bparent;
+  return !!(aparent&&bparent&&aparent===bparent);
 }
 function mergeDuplicate(a,b){
   const mssA=a.source==='MSS',mssB=b.source==='MSS';
@@ -125,32 +131,43 @@ function consolidatePeople(list){
   });
   return out.sort((a,b)=>a.name.localeCompare(b.name));
 }
-function mergePeople(newOnes){
-  const valid=newOnes.filter(n=>n.name);
-  people=consolidatePeople([...people,...valid]);
-  save(); renderAll();
-  return valid.length;
+function replaceSourceRoster(newOnes,source){
+  const valid=consolidatePeople(newOnes.filter(n=>n.name));
+  const oldSource=people.filter(p=>low(p.source)===low(source)&&!p.walkUp);
+  const keep=people.filter(p=>low(p.source)!==low(source)||p.walkUp);
+  const oldById=new Map(oldSource.map(p=>[p.id,p]));
+  const merged=valid.map(n=>{
+    const old=oldSource.find(p=>sameParticipant(p,n))||oldById.get(n.id);
+    return old?mergeDuplicate(old,n):n;
+  });
+  people=consolidatePeople([...keep,...merged]);
+  const activeIds=new Set(people.map(p=>p.id));
+  attendanceRecords=attendanceRecords.filter(r=>activeIds.has(r.participantId));
+  save();renderAll();
+  return {loaded:valid.length,replaced:oldSource.length,total:merged.length};
 }
 function loadCsv(kind){
   const inp=kind==='mss'?$('mssFile'):$('secondaryFile');
   if(!inp?.files?.[0]){alert('Choose a CSV first.');return;}
   if(kind==='secondary'){
-    appSettings.secondarySourceName=clean($('secondarySourceName')?.value)||'Other Source';appSettings.areas=clean($('setAreas')?.value).split(',').map(x=>clean(x)).filter(Boolean);appSettings.commSender=clean($('commSender')?.value);appSettings.commReplyTo=clean($('commReplyTo')?.value);appSettings.surveyLink=clean($('surveyLink')?.value);
-    save(); updateSecondarySourceLabels();
+    appSettings.secondarySourceName=clean($('secondarySourceName')?.value)||'Other Source';
+    save();updateSecondarySourceLabels();
   }
+  const source=kind==='mss'?'MSS':appSettings.secondarySourceName;
   const r=new FileReader();
   r.onload=()=>{
     try{
       const rows=parseCSV(r.result);
       if(!rows.length){alert('The CSV did not contain any readable data rows.');return;}
-      const normalized=rows.map(row=>normalizeRow(row,kind));
-      const count=mergePeople(normalized);
-      if(!count){
+      const normalized=rows.map(row=>normalizeRow(row,kind)).filter(p=>p.name);
+      if(!normalized.length){
         const headers=Object.keys(rows[0]||{}).join(', ');
         alert(`No participant names could be identified. CSV columns found: ${headers}`);
         return;
       }
-      alert(`${count} participant${count===1?'':'s'} loaded from ${kind==='mss'?'MSS':appSettings.secondarySourceName}.`);
+      const result=replaceSourceRoster(normalized,source);
+      inp.value='';
+      alert(`${result.loaded} participant${result.loaded===1?'':'s'} loaded from ${source}. The prior ${source} roster was replaced, not appended.`);
     }catch(err){alert('Could not import this CSV: '+(err?.message||err));}
   };
   r.onerror=()=>alert('The selected CSV could not be read.');
@@ -176,7 +193,7 @@ function personCard(p){const needs=needsWaiver(p),checked=isChecked(p),arrival=a
 function renderAreaSummary(){const card=$('areaSummaryCard'),el=$('areaSummary');if(!card||!el)return;card.classList.toggle('hidden',!appSettings.ruleAssignArea);if(!appSettings.ruleAssignArea)return;const areas=appSettings.areas||[];el.innerHTML=areas.map(a=>{const assigned=people.filter(p=>currentArea(p)===a);const checked=assigned.filter(p=>isChecked(p)).length;return `<div class="areaStat"><div class="areaStatName">${a}</div><div class="areaStatNum">${checked}</div><div class="small">checked in • ${assigned.length} assigned</div></div>`;}).join('')||'<div class="notice">Add court/area names in Session Builder.</div>';}
 function renderPeople(){const v=visiblePeople();$('peopleList').innerHTML=v.map(personCard).join('')||'';const searching=clean($('search')?.value);$('filterMsg').classList.toggle('hidden',!!v.length||!people.length);$('filterMsg').textContent=people.length?(searching?'No participant matches that search within the selected session/source.':'No participants match the selected filters. Try Clear Filters.'):'No participants loaded yet.';}
 
-function renderKpis(){const cohort=baseCohort();$('kRegistered').textContent=cohort.length;$('kChecked').textContent=cohort.filter(isChecked).length;$('kWaiver').textContent=cohort.filter(needsWaiver).length;$('kHomework').textContent=cohort.filter(p=>attendanceFor(p)?.homework||p.homework).length;}
+function renderKpis(){const cohort=baseCohort();const swarm=people.filter(p=>p.type==='Swarm'||(p.source!=='MSS'&&!p.walkUp));const publicPeople=people.filter(p=>p.type==='Public'||p.source==='MSS');$('kSwarm').textContent=swarm.length;$('kPublic').textContent=publicPeople.length;$('kRegistered').textContent=cohort.length;$('kChecked').textContent=cohort.filter(isChecked).length;$('kWaiver').textContent=cohort.filter(needsWaiver).length;$('kHomework').textContent=cohort.filter(p=>attendanceFor(p)?.homework||p.homework).length;}
 
 function renderTables(){const rows=people.slice(0,300).map(p=>`<tr><td>${p.name}</td><td>${p.type}</td><td><input class="miniInput" value="${p.grade||''}" onchange="updateParticipant('${p.id}','grade',this.value)"></td><td><input class="miniInput" value="${p.age||''}" onchange="updateParticipant('${p.id}','age',this.value)"></td><td>${p.team||''}</td><td>${p.session||''}</td><td>${p.email||''}</td><td>${p.phone||''}</td><td>${p.source||''}</td></tr>`).join('');$('importTable').innerHTML=`<table><tr><th>Name</th><th>Type</th><th>Grade</th><th>Age</th><th>Team</th><th>Registered Session</th><th>Email</th><th>Phone</th><th>Source</th></tr>${rows}</table>`;$('waiverTable').innerHTML=`<table><tr><th>Name</th><th>Type</th><th>Status</th><th>Action</th></tr>${people.map(p=>`<tr><td>${p.name}</td><td>${p.type}</td><td>${!requiresWaiver(p)?'Not Required':(p.waiver?'Complete':'Missing')}</td><td><button class="btn secondary" onclick="startWaiver('${p.id}')">Open</button></td></tr>`).join('')}</table>`;$('homeworkTable').innerHTML=`<table><tr><th>Name</th><th>Type</th><th>Team</th><th>Homework</th><th>Action</th></tr>${people.map(p=>`<tr><td>${p.name}</td><td>${p.type}</td><td>${p.team}</td><td>${p.homework?'Complete':'Pending'}</td><td><button class="btn secondary" onclick="toggleHomework('${p.id}')">Toggle</button></td></tr>`).join('')}</table>`;}
 function updateParticipant(id,field,value){const p=people.find(x=>x.id===id);if(!p)return;p[field]=clean(value);save();renderAll();}
