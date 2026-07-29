@@ -37,7 +37,7 @@
         <div class="tile"><div class="label">Homework Done</div><div class="num" id="kHomework">0</div></div>
       </div>
       <div class="card">
-        <div class="row between"><div class="row"><select id="dayFilter" onchange="onDayChange()"></select><select id="sessionFilter" onchange="renderAll()"></select><select id="typeFilter" onchange="renderAll()"><option value="all">All Sources</option></select><select id="areaFilter" onchange="renderAll()"><option value="all">All Areas</option></select><select id="statusFilter" onchange="renderAll()"><option value="all">All Statuses</option><option value="checked">Checked In</option><option value="notchecked">Not Checked In</option><option value="waiver">Needs Waiver</option></select></div><div class="row"><button class="btn secondary" onclick="clearFilters()">Clear Filters</button></div></div>
+        <div class="row between"><div class="row"><select id="dayFilter" onchange="onDayChange()"></select><select id="sessionFilter" onchange="renderAll()"></select><select id="typeFilter" onchange="renderAll()"><option value="all">All Sources</option></select><select id="areaFilter" onchange="renderAll()"><option value="all">All Areas</option></select><select id="statusFilter" onchange="renderAll()"><option value="all">All Statuses</option><option value="checked">Checked In</option><option value="notchecked">Not Checked In</option><option value="waiver">Needs Waiver</option></select></div><div class="row"><button class="btn green" onclick="openWalkUp()">+ Add Walk-Up Camper</button><button class="btn secondary" onclick="clearFilters()">Clear Filters</button></div></div>
         <div class="scanPanel" id="scanPanel"><div class="field"><label>Optional QR / Membership Scan</label><div class="row"><input id="scanInput" placeholder="Scan, paste, or enter QR/member ID"/><button class="btn green" onclick="scanCode()">Scan / Find</button><button class="btn secondary" onclick="openScanner()">📷 Open Camera Scanner</button></div><div class="small">Use a phone/tablet camera, laptop webcam, USB scanner, or manual entry. Search by name remains available below.</div></div></div>
         <div class="field"><label>Manual Lookup</label><input id="search" placeholder="Search player, parent, phone, team..." oninput="renderAll()"></div>
         <div class="small" id="filterHelp">Tip: Choose the registration source first to narrow the list. Session filtering applies when the imported file identifies a specific session.</div><div id="filterMsg" class="notice hidden"></div><div id="scanMsg" class="notice hidden"></div>
@@ -80,6 +80,34 @@
   </main>
 </div>
 
+<div class="modal" id="walkUpModal">
+  <div class="modalbox walkUpBox">
+    <h2>Add Walk-Up Camper</h2>
+    <div class="readyBox green" id="walkUpSessionLabel"></div>
+    <p class="small">The camper will be added to the participant list and checked into the selected day and session.</p>
+    <div class="two">
+      <div class="field"><label>Camper Name *</label><input id="walkUpName" autocomplete="off" placeholder="First and last name"></div>
+      <div class="field"><label>Grade</label><input id="walkUpGrade" placeholder="Example: 6th"></div>
+    </div>
+    <div class="two">
+      <div class="field"><label>Age</label><input id="walkUpAge" inputmode="numeric" placeholder="Example: 12"></div>
+      <div class="field"><label>Parent / Guardian</label><input id="walkUpParent" autocomplete="off"></div>
+    </div>
+    <div class="two">
+      <div class="field"><label>Phone</label><input id="walkUpPhone" inputmode="tel" autocomplete="tel"></div>
+      <div class="field"><label>Email</label><input id="walkUpEmail" type="email" autocomplete="email"></div>
+    </div>
+    <div class="two">
+      <div class="field"><label>Team / Group</label><input id="walkUpTeam" placeholder="Optional"></div>
+      <div class="field"><label>Registration Source</label><select id="walkUpSource"><option value="Walk-Up">Walk-Up</option><option value="MSS">MSS</option><option value="Other Source">Other Source</option></select></div>
+    </div>
+    <div class="field hidden" id="walkUpAreaField"><label>Court / Area *</label><select id="walkUpArea"></select></div>
+    <label class="agreementBox"><input type="checkbox" id="walkUpPaid"><span><b>Payment collected or handled at the desk</b> (informational only)</span></label>
+    <div id="walkUpMsg" class="notice hidden"></div>
+    <div class="row between walkUpFooter"><button class="btn secondary" onclick="closeWalkUp()">Cancel</button><button class="btn green" onclick="saveWalkUp()">Add Camper & Check In</button></div>
+  </div>
+</div>
+
 <div class="modal" id="scannerModal"><div class="modalbox scannerBox"><h2>Camera QR Scanner</h2><div id="scannerStatus" class="readyBox yellow">Starting camera...</div><div class="scannerStage"><video id="scannerVideo" playsinline muted></video><div class="scannerFrame"></div></div><div class="small">Point the camera at an MSS registration QR code or membership card. If the camera is not supported, use the scan input box or manual search.</div><div class="row between"><button class="btn secondary" onclick="closeScanner()">Close Scanner</button><button class="btn" onclick="restartScanner()">Restart</button></div></div></div>
 <div class="scanToast hidden" id="scanToast"><div class="scanToastTitle" id="scanToastTitle">WELCOME</div><div id="scanToastBody"></div></div>
 <div class="modal" id="waiverModal">
@@ -95,6 +123,6 @@
     <div class="waiverFooter"><button class="btn secondary" onclick="closeWaiver()">Cancel</button><button class="btn green" id="waiverCompleteBtn" onclick="completeWaiver()" disabled>Complete Waiver & Check In</button></div>
   </div>
 </div>
-<script src="js/app.js?v=200"></script>
+<script src="js/app.js?v=201"></script>
 </body>
 </html>

@@ -21,3 +21,10 @@ Standalone GitHub Pages attendance and arrival manager.
 
 ## Important
 Data is saved in browser local storage on the device and browser being used. Export an Event Backup at the end of each day or event.
+
+
+## v2.0.1 Walk-Up Camper Entry
+- Check-in staff can add an unregistered camper directly from Today Check-In.
+- Captures camper, guardian, contact, grade/age, team, source, payment-handled note, and court/area when required.
+- Adds the camper to the participant roster and creates the selected session's unified attendance record immediately.
+- Detects likely duplicates and checks in the existing participant instead of creating a duplicate.
