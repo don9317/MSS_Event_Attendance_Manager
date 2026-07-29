@@ -29,8 +29,8 @@ function matchesSearch(p,q){if(!q)return true;const words=low(q).split(/\s+/).fi
 function baseCohort(){const sess=selectedSession();const source=$('typeFilter')?.value||'all';const area=$('areaFilter')?.value||'all';return people.filter(p=>{if(source!=='all'&&p.source!==source)return false;if(p.type==='Public'&&!publicMatchesSession(p,sess))return false;if(area!=='all'&&currentArea(p)!==area)return false;return true;});}
 function visiblePeople(){const q=$('search')?.value||'';const stat=$('statusFilter')?.value||'all';return baseCohort().filter(p=>{const checked=isChecked(p);if(stat==='checked'&&!checked)return false;if(stat==='notchecked'&&checked)return false;if(stat==='waiver'&&!needsWaiver(p))return false;return matchesSearch(p,q);});}
 function formatDayLabel(d){const dt=new Date(d.date+'T12:00:00');const pretty=isNaN(dt)?d.date:dt.toLocaleDateString([], {weekday:'short',month:'short',day:'numeric'});return `${d.label||'Day'} — ${pretty}`;}
-const LS='mssAttendance_v20_';
-const OLD_KEYS=['mssAttendance_v13_','mssAttendance_v124_'];
+const LS='mssAttendanceArrival_v50_';
+const OLD_KEYS=['mssAttendance_v20_','mssAttendance_v42_','mssAttendanceArrival_v42_','mssAttendance_v13_','mssAttendance_v124_'];
 function loadFirst(suffix,fallback){for(const k of [LS,...OLD_KEYS]){const raw=localStorage.getItem(k+suffix);if(raw){try{return JSON.parse(raw)}catch(e){}}}return fallback;}
 let people=loadFirst('people',[]);
 let legacyHistory=loadFirst('history',[]);
@@ -326,7 +326,7 @@ function renderEventArchives(){const el=$('eventArchiveTable');if(!el)return;el.
 function openArchivedEvent(id){const a=eventArchives.find(x=>x.id===id);if(!a)return;if(!confirm('Replace the current working event with this archived event?'))return;people=JSON.parse(JSON.stringify(a.people||[]));attendanceRecords=dedupeRecords(JSON.parse(JSON.stringify(a.records||a.history||[])));history=attendanceRecords;appSettings=JSON.parse(JSON.stringify(a.settings||appSettings));save();applySettingsToUI();renderAll();}
 
 function deleteArchivedEvent(id){if(!confirm('Delete this archived event from this browser?'))return;eventArchives=eventArchives.filter(x=>x.id!==id);save();renderEventArchives();}
-function exportEventBackup(){const payload={version:'2.0',exportedAt:new Date().toISOString(),settings:appSettings,people,attendanceRecords};downloadJson(`mss-event-${(appSettings.activityName||'event').replace(/[^a-z0-9]+/gi,'-')}.json`,payload);}
+function exportEventBackup(){const payload={version:'5.0',exportedAt:new Date().toISOString(),settings:appSettings,people,attendanceRecords};downloadJson(`mss-event-${(appSettings.activityName||'event').replace(/[^a-z0-9]+/gi,'-')}.json`,payload);}
 
 function downloadJson(name,obj){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(obj,null,2)],{type:'application/json'}));a.download=name;document.body.appendChild(a);a.click();a.remove();}
 function restoreEventBackup(){const f=$('eventBackupFile')?.files?.[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);people=d.people||[];attendanceRecords=dedupeRecords(d.attendanceRecords||d.records||d.history||[]);history=attendanceRecords;appSettings={...appSettings,...(d.settings||{})};save();applySettingsToUI();renderAll();alert('Event restored.');}catch(e){alert('Could not restore event: '+e.message);}};r.readAsText(f);}
